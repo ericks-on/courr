@@ -68,12 +68,6 @@ class DBStorage:
         session = self.__session()
         user = session.query(User).filter_by(username=username).first()
         return user
-    
-    def get_product(self, name):
-        """gets product if the name exists"""
-        session = self.__session()
-        product = session.query(Product).filter_by(name=name).first()
-        return product
 
     def count(self, cls):
         """counts all items on the table based on cls"""

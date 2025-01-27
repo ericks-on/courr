@@ -15,7 +15,7 @@ from passlib.hash import bcrypt
 from models.user import User
 from werkzeug.exceptions import BadRequest
 from models import storage
-from api.v1.views import app_views
+from api.v1.endpoints import app_views
 
 
 load_dotenv()
@@ -24,13 +24,46 @@ load_dotenv()
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
-Swagger(app)
+
+@app.teardown_appcontext
+def teardown(exception=None):
+    """calls storage close method to remove current session"""
+    storage.close()
+
+@app.errorhandler(404)
+def not_found_error(error):
+    """defines what happens if code 404 is raised"""
+    return make_response(jsonify({'error': 'Not Found'}), 400)
+
+@app.errorhandler(400)
+def bad_request_error(error):
+    """defines what happens if code 400 is raised"""
+    return make_response(jsonify({'error': 'Bad Request'}), 400)
+
+@app.errorhandler(401)
+def unauthorized_error(error):
+    """defines what happens if code 401 is raised"""
+    return make_response(jsonify({'error': 'Unauthorized'}), 401)
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    """defines what happens if code 403 is raised"""
+    return make_response(jsonify({'error': 'Forbidden'}), 403)
+
+@app.errorhandler(405)
+def method_not_allowed_error(error):
+    """defines what happens if code 405 is raised"""
+    return make_response(jsonify({'error': 'Method Not Allowed'}), 405)
+
+# Documentation by swagger
 app.config['SWAGGER'] = {
         'title': 'Courrier RESTFull API'
         }
+Swagger(app)
+
 jwt = JWTManager(app)
 csrf = CSRFProtect(app)
-app.config["JWT_COOKIE_SECURE"] = False #remember to change to True
+app.config["JWT_COOKIE_SECURE"] = True #remember to change to True
 secret_key = os.environ.get('SECRET_KEY')
 jwt_key = os.environ.get('JWT_KEY')
 app.config['SECRET_KEY'] = secret_key
@@ -85,36 +118,6 @@ def refresh_expiring_jwts(response):
     except (RuntimeError, KeyError):
         return response
 
-
-@app.teardown_appcontext
-def teardown(exception=None):
-    """calls storage close method to remove current session"""
-    storage.close()
-
-@app.errorhandler(404)
-def not_found_error(error):
-    """defines what happens if code 404 is raised"""
-    return make_response(jsonify({'error': 'Not Found'}), 400)
-
-@app.errorhandler(400)
-def bad_request_error(error):
-    """defines what happens if code 400 is raised"""
-    return make_response(jsonify({'error': 'Bad Request'}), 400)
-
-@app.errorhandler(401)
-def unauthorized_error(error):
-    """defines what happens if code 401 is raised"""
-    return make_response(jsonify({'error': 'Unauthorized'}), 401)
-
-@app.errorhandler(403)
-def forbidden_error(error):
-    """defines what happens if code 403 is raised"""
-    return make_response(jsonify({'error': 'Forbidden'}), 403)
-
-@app.errorhandler(405)
-def method_not_allowed_error(error):
-    """defines what happens if code 405 is raised"""
-    return make_response(jsonify({'error': 'Method Not Allowed'}), 405)
 
 
 if __name__ == "__main__":
