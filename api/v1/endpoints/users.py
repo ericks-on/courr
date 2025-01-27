@@ -11,8 +11,8 @@ user_bp = Blueprint('users', __name__, url_prefix='/users')
 
 
 @user_bp.route('/', methods=['GET'])
-@swag_from('documentation/user/all_users.yml', methods=['GET'])
 @jwt_required()
+@swag_from('documentation/user/all_users.yml', methods=['GET'])
 def all_users():
     """To obtain all users"""
     request_user = storage.get_user(get_jwt_identity())
@@ -22,8 +22,8 @@ def all_users():
     return jsonify({"users": users}), 200
 
 @user_bp.route('/', methods=['POST'])
-@swag_from('documentation/user/add_user.yml', methods=['POST'])
 @jwt_required()
+@swag_from('documentation/user/add_user.yml', methods=['POST'])
 def add_user():
     """ Adds new user"""
     request_user = storage.get_user(get_jwt_identity())
@@ -51,8 +51,8 @@ def add_user():
     return jsonify(new_user.to_dict()), 201
 
 @user_bp.route('/self', methods=['GET'])
-@swag_from('documentation/user/get_user.yml', methods=['GET'])
 @jwt_required()
+@swag_from('documentation/user/get_user.yml', methods=['GET'])
 def get_user():
     """ Gets user information"""
     request_user = storage.get_user(get_jwt_identity())
@@ -61,8 +61,8 @@ def get_user():
     return jsonify({"user": request_user.to_dict()}), 200
 
 @user_bp.route('/<user_id>', methods=['DELETE'])
-@swag_from('documentation/user/delete_user.yml', methods=['DELETE'])
 @jwt_required()
+@swag_from('documentation/user/delete_user.yml', methods=['DELETE'])
 def delete_user():
     """Deleting a user"""
     user = storage.get_user(get_jwt_identity())
