@@ -195,7 +195,7 @@ def get_order_tracking(order_id):
         abort(403)
 
     # get the tracking
-    tracking = storage.get(Tracking, order.tracking_id)
+    tracking = [tracking.to_dict() for tracking in order.tracking]
 
     return jsonify(tracking.to_dict()), 200
 
