@@ -33,7 +33,7 @@ def teardown(exception=None):
 @app.errorhandler(404)
 def not_found_error(error):
     """defines what happens if code 404 is raised"""
-    return make_response(jsonify({'error': 'Not Found'}), 400)
+    return make_response(jsonify({'error': 'Not Found'}), 404)
 
 @app.errorhandler(400)
 def bad_request_error(error):

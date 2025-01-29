@@ -13,6 +13,6 @@ class Order(Base, Basemodel):
     status = Column(String(128), nullable=False, default='pending')
     address = Column(String(128), nullable=False)
     tracking_id = Column(String(128), nullable=True)
-    weight = Column(String(128), nullable=False)
-    dimensions = Column(String(128), nullable=False)
+    weight = Column(String(128), nullable=False, default='pending')
+    dimensions = Column(String(128), nullable=False, default='pending')
     user = relationship('User', back_populates='orders')

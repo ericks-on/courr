@@ -9,7 +9,6 @@ class Tracking(Base, Basemodel):
     __tablename__ = 'tracking'
     order_id = Column(String(60), ForeignKey('orders.id'), nullable=False)
     warehouse_id = Column(String(60), ForeignKey('warehouses.id'), nullable=True)
-    status = Column(String(128), nullable=False, default='Received')
-    remarks = Column(String(128), nullable=True)
+    status = Column(String(128), nullable=False, default='pending') # pending, in transit, delivered
     order = relationship('Order', back_populates='tracking')
     warehouse = relationship('Warehouse', back_populates='tracking')
