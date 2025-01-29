@@ -12,3 +12,4 @@ class User(Base, Basemodel):
     password = Column(String(128), nullable=False)
     username = Column(String(128), nullable=False)
     user_type = Column(String(128), nullable=False, default='normal')
+    address = Column(String(128), nullable=True)
