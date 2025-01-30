@@ -122,31 +122,6 @@ def refresh_expiring_jwts(response):
 
 
 if __name__ == "__main__":
-    # # Creating users
-    # admin_user = User(
-    #     first_name="Admin",
-    #     last_name="User",
-    #     email="admin@example.com",
-    #     password="pass123",  # Replace with a securely hashed password
-    #     username="admin_user",
-    #     user_type="admin",
-    #     address="123 Admin St"
-    # )
-
-    # normal_user = User(
-    #     first_name="John",
-    #     last_name="Doe",
-    #     email="john.doe@example.com",
-    #     password="pass123",
-    #     username="john_doe",
-    #     user_type="normal",
-    #     address="456 Normal Ave"
-    # )
-
-    # storage.add(admin_user)
-    # storage.add(normal_user)
-    # storage.save()
-
     host = os.environ.get('API_HOST')
     if not host:
         host = '0.0.0.0'
