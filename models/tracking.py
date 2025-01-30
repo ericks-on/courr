@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from models.base_model import Base, Basemodel
 
 
-class Tracking(Base, Basemodel):
+class Tracking(Basemodel, Base):
     """The tracking model"""
     __tablename__ = 'tracking'
     order_id = Column(String(60), ForeignKey('orders.id'), nullable=False)

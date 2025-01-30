@@ -6,7 +6,7 @@ from sqlalchemy.sql.schema import ForeignKey
 from models.base_model import Base, Basemodel
 
 
-class Order(Base, Basemodel):
+class Order(Basemodel, Base):
     """The order model"""
     __tablename__ = 'orders'
     user_id = Column(String(60), ForeignKey('users.id'), nullable=False)

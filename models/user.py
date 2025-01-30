@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, DateTime
 from models.base_model import Base, Basemodel
 
 
-class User(Base, Basemodel):
+class User(Basemodel, Base):
     """This is the user model"""
     __tablename__ = 'users'
     first_name = Column(String(128), nullable=False)

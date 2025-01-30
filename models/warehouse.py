@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from models.base_model import Base, Basemodel
 
 
-class Warehouse(Base, Basemodel):
+class Warehouse(Basemodel, Base):
     """The warehouse model"""
     __tablename__ = 'warehouses'
     name = Column(String(128), nullable=False)

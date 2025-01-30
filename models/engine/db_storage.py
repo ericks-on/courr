@@ -2,7 +2,6 @@
 """This contains the db storage model"""
 import os
 from dotenv import load_dotenv
-from passlib.hash import bcrypt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from models.base_model import Base
@@ -32,11 +31,6 @@ class DBStorage:
 
     def add(self, obj):
         """adding new object to session"""
-        # try:
-        #     password = obj.password
-        #     obj.password = bcrypt.hash(password)
-        # except AttributeError:
-        #     pass
         session = self.__session()
         session.add(obj)
 
