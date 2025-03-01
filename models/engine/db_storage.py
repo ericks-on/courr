@@ -6,11 +6,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from models.base_model import Base
 from models.user import User
+from models.warehouse import Warehouse
+from models.order import Order
+from models.tracking import Tracking
 
 
 
 load_dotenv()
-tables = [User.__table__]
+tables = [User.__table__, Warehouse.__table__, Order.__table__, Tracking.__table__]
 
 
 class DBStorage:
@@ -41,6 +44,7 @@ class DBStorage:
 
     def reload(self):
         """creating scoped session and all tables"""
+        # Base.metadata.drop_all(self.__engine, tables=tables)
         Base.metadata.create_all(self.__engine, tables=tables)
         session_factory = sessionmaker(bind=self.__engine)
         self.__session = scoped_session(session_factory)

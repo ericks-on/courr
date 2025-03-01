@@ -18,12 +18,28 @@ from models import storage
 from api.v1.endpoints import app_views
 
 
+
 load_dotenv()
 
 
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+# cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, resources={r"*": {
+    "origins": ["http://localhost:3000"],
+    "allow_headers": ["Content-Type", "Authorization"],
+    "supports_credentials": True,
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}})
+
+# @app.after_request
+# def after_request(response):
+#     response.headers.add("Access-Control-Allow-Credentials", "true")
+#     return response
+
+# jwt access token config
+app.config["JWT_TOKEN_LOCATION"] = ["headers","cookies"]
+app.config["JWT_ACCESS_COOKIE_NAME"] = "accessToken"
 
 @app.teardown_appcontext
 def teardown(exception=None):
@@ -62,21 +78,20 @@ app.config['SWAGGER'] = {
 Swagger(app)
 
 jwt = JWTManager(app)
-csrf = CSRFProtect(app)
-app.config["JWT_COOKIE_SECURE"] = True #remember to change to True
+# app.config["JWT_COOKIE_SECURE"] = True
 secret_key = os.environ.get('SECRET_KEY')
 jwt_key = os.environ.get('JWT_KEY')
 app.config['SECRET_KEY'] = secret_key
-app.config['JWT_COOKIE_CSRF_PROTECT'] = True
-app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+# app.config['JWT_COOKIE_CSRF_PROTECT'] = True
 app.config['JWT_SECRET_KEY'] = jwt_key
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 app.register_blueprint(app_views)
 
+app.url_map.strict_slashes = False
+
 
 
 @app.route('/api/v1/token/auth', methods=['POST'])
-@csrf.exempt
 def login():
     """authenticates user and creates an access token"""
     all_users = storage.all(User)
@@ -93,10 +108,31 @@ def login():
             access_token = create_access_token(identity=username, fresh=True)
             refresh_token = create_access_token(identity=username)
             return jsonify(access_token=access_token,
-                           refresh_token=refresh_token), 200
+                           refresh_token=refresh_token,
+                           user_type=user.user_type), 200
         return jsonify({"msg": "Wrong Username or Password"}), 401
     return jsonify({"msg": "Wrong Username or Password"}), 401
-    
+
+@app.route('/api/v1/token/verify', methods=['GET'])
+@jwt_required()
+def confirm():
+    """confirms the user's access token from headers"""
+    try:
+        access_token = request.headers.get('Authorization').split(" ")[1]
+    except:
+        # check from cookie if no headers
+        access_token = request.cookies.get("accessToken")
+
+    if not access_token:
+        return jsonify({"msg": "Missing access token"}), 400
+    try:
+        username = get_jwt_identity()
+        user = storage.get_user(username)
+        return jsonify({"msg": "Valid access token", "user": user.to_dict()}), 200
+    except:
+        print("Invalid access token")
+        return jsonify({"msg": "Invalid access token"}), 401
+
 @app.route('/api/v1/token/refresh', methods=['GET'])
 @jwt_required()
 def refresh():
@@ -104,6 +140,14 @@ def refresh():
     current_user = get_jwt_identity()
     access_token = create_access_token(identity=current_user)
     return jsonify(access_token=access_token), 200
+
+@app.route('/api/v1/auth/logout', methods=['GET'])
+@jwt_required()
+def logout():
+    """logs out user"""
+    response = make_response(jsonify({"msg": "Successfully logged out"}))
+    response.set_cookie("accessToken", "", expires=0, httponly=True)
+    return response
 
 @app.after_request
 def refresh_expiring_jwts(response):

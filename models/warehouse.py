@@ -9,4 +9,6 @@ class Warehouse(Basemodel, Base):
     """The warehouse model"""
     __tablename__ = 'warehouses'
     name = Column(String(128), nullable=False)
-    location = Column(String(128), nullable=False)
+    country = Column(String(128), nullable=False)
+    county = Column(String(128), nullable=False)
+    town = Column(String(128), nullable=False)

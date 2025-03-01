@@ -5,6 +5,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from flasgger.utils import swag_from
 from models import storage
 from models.user import User
+from flask_wtf.csrf import CSRFProtect
 
 
 user_bp = Blueprint('users', __name__, url_prefix='/users')
@@ -29,20 +30,20 @@ def add_user():
     request_user = storage.get_user(get_jwt_identity())
     if request_user.user_type != 'admin':
         abort(403)
-    if not request.json():
+    if not request.get_json():
         abort(400, "Not a JSON")
-    if not request.json().get("username"):
+    if not request.get_json().get("username"):
         abort(400, "Missing username")
-    if not request.json().get("password"):
+    if not request.get_json().get("password"):
         abort(400, "Missing password")
-    username = request.json().get("username")
-    password = request.json().get("password")
-    user_type = request.json().get("user_type")
+    username = request.get_json().get("username")
+    password = request.get_json().get("password")
+    user_type = request.get_json().get("user_type")
     if not user_type:
         user_type = "normal"
-    email = request.json().get("email")
-    first_name = request.json().get("first_name")
-    last_name = request.json().get("last_name")
+    email = request.get_json().get("email")
+    first_name = request.get_json().get("first_name")
+    last_name = request.get_json().get("last_name")
     new_user = User(username=username, password=password, user_type=user_type,
                     email=email, first_name=first_name,
                     last_name=last_name)
@@ -63,12 +64,12 @@ def get_user():
 @user_bp.route('/<user_id>', methods=['DELETE'])
 @jwt_required()
 @swag_from('documentation/user/delete_user.yml', methods=['DELETE'])
-def delete_user():
+def delete_user(user_id):
     """Deleting a user"""
     user = storage.get_user(get_jwt_identity())
     if not user:
         abort(404)
-        
+
     if user.user_type != 'admin':
         abort(403)
     del_user = storage.get(User, user_id)

@@ -11,8 +11,13 @@ class Order(Basemodel, Base):
     __tablename__ = 'orders'
     user_id = Column(String(60), ForeignKey('users.id'), nullable=False)
     status = Column(String(128), nullable=False, default='pending')
-    address = Column(String(128), nullable=False)
+    pickup = Column(String(128), ForeignKey('warehouses.id'), nullable=False)
+    delivery = Column(String(128), ForeignKey('warehouses.id'), nullable=False)
     weight = Column(String(128), nullable=False, default='pending')
     dimensions = Column(String(128), nullable=False, default='pending')
-    user = relationship('User', back_populates='orders')
+    user = relationship('User', backref='orders')
     tracking = relationship('Tracking', back_populates='order')
+    delivery_warehouse = relationship('Warehouse', backref='delivery_orders',
+                                      foreign_keys=[delivery])
+    pickup_warehouse = relationship('Warehouse', backref='pickup_orders',
+                                    foreign_keys=[pickup])
