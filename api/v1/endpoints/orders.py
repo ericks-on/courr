@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Contains the endpoints for the orders"""
-from flask import Blueprint, request, jsonify, abort, make_response
+from flask import Blueprint, request, jsonify, abort, make_response, current_app
 from flasgger.utils import swag_from
 from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from models import storage
@@ -9,6 +9,7 @@ from models.tracking import Tracking
 
 
 orders_bp = Blueprint('orders', __name__, url_prefix='/orders')
+mail = current_app.extensions['mail']
 
 
 @orders_bp.route('/', methods=['OPTIONS'], strict_slashes=False)
@@ -48,7 +49,9 @@ def all_orders():
 @orders_bp.route('/', methods=['POST'])
 @jwt_required()
 def add_order():
-    """ Adds new order"""
+    """ Adds new order and sends notification email to the user"""
+    from utils.orders import send_order_notification_email
+
     # obtain current user
     username = get_jwt_identity()
     # get user from storage
@@ -79,6 +82,9 @@ def add_order():
     new_tracking = Tracking(order_id=new_order.id)
     storage.add(new_tracking)
     storage.save()
+
+    # Send notification email to the user
+    send_order_notification_email(mail, request_user.email, new_order)
 
     return jsonify(new_order.to_dict()), 201
 
@@ -140,7 +146,8 @@ def delete_order(order_id):
 @orders_bp.route('/<order_id>', methods=['PUT'])
 @jwt_required()
 def update_order(order_id):
-    """Update an order and create tracking record"""
+    """Update an order, create tracking record, and notify the user."""
+    from utils.orders import send_order_update_notification
     # Obtain current user
     username = get_jwt_identity()
     # Get user from storage
@@ -167,10 +174,12 @@ def update_order(order_id):
     # Fields that can be updated
     allowed_fields = ['status', 'weight', 'dimensions']
     
-    # Update order fields
+    # Track changes for notification
+    changes = {}
     for key, value in data.items():
         if key in allowed_fields:
             setattr(order, key, value)
+            changes[key] = value
     
     # Create a new tracking record with the updated status
     if 'status' in data:
@@ -180,7 +189,12 @@ def update_order(order_id):
     # Save changes
     storage.save()
     
+    # Send notification email if there are changes
+    if changes:
+        send_order_update_notification(mail, order.user.email, order, changes)
+    
     return jsonify(order.to_dict()), 200
+
 
 @orders_bp.route('/<order_id>/tracking', methods=['GET'])
 @jwt_required()

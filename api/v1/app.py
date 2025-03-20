@@ -7,6 +7,7 @@ from datetime import timedelta, datetime, timezone
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
 from flasgger import Swagger
+from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect
 from flask_jwt_extended import create_access_token, JWTManager
 from flask_jwt_extended import get_jwt_identity, get_jwt, jwt_required
@@ -23,6 +24,7 @@ load_dotenv()
 
 
 app = Flask(__name__)
+mail = Mail(app)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 # cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 CORS(app, resources={r"*": {
@@ -40,6 +42,17 @@ CORS(app, resources={r"*": {
 # jwt access token config
 app.config["JWT_TOKEN_LOCATION"] = ["headers","cookies"]
 app.config["JWT_ACCESS_COOKIE_NAME"] = "accessToken"
+
+# email config
+app.config['MAIL_SERVER'] = 'server331.web-hosting.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = 'mutisyaerickson@cbctrack.com'
+app.config['MAIL_PASSWORD'] = 'Chunkme@t254'
+app.config['MAIL_DEFAULT_SENDER'] = 'mutisyaerickson@cbctrack.com'
+app.config['MAIL_DEBUG'] = True
+mail=Mail(app)
+
 
 @app.teardown_appcontext
 def teardown(exception=None):
@@ -90,6 +103,19 @@ app.register_blueprint(app_views)
 app.url_map.strict_slashes = False
 
 
+@app.route('/email_test', methods=['GET'])
+def email_test():
+    """sends a test email"""
+    try:
+        msg = Message('Test Email', sender = 'erickson.mbuvi@nebulaanalytics.org',
+                      recipients=['mutisyaerickson@gmail.com'])
+        msg.body = "This is a test email"
+        with mail.connect() as conn:
+            conn.send(msg)
+            return jsonify({"msg": "Email sent"}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"msg": "Email not sent"}), 400
 
 @app.route('/api/v1/token/auth', methods=['POST'])
 def login():
