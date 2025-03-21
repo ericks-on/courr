@@ -6,11 +6,10 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_req
 from models import storage
 from models.order import Order
 from models.tracking import Tracking
+from models.warehouse import Warehouse
 
 
 orders_bp = Blueprint('orders', __name__, url_prefix='/orders')
-mail = current_app.extensions['mail']
-
 
 @orders_bp.route('/', methods=['OPTIONS'], strict_slashes=False)
 def options():
@@ -50,7 +49,10 @@ def all_orders():
 @jwt_required()
 def add_order():
     """ Adds new order and sends notification email to the user"""
-    from utils.orders import send_order_notification_email
+    from api.v1.endpoints.utils.orders import send_order_notification_email
+
+
+    mail = current_app.extensions['mail']
 
     # obtain current user
     username = get_jwt_identity()
@@ -83,8 +85,14 @@ def add_order():
     storage.add(new_tracking)
     storage.save()
 
+    # get warehouse names
+    pickup_warehouse_name = storage.get(Warehouse, pickup_warehouse).name
+    delivery_warehouse_name = storage.get(Warehouse, delivery_warehouse).name
+
+
     # Send notification email to the user
-    send_order_notification_email(mail, request_user.email, new_order)
+    send_order_notification_email(mail, request_user.email, new_order, pickup_warehouse_name,
+                                  delivery_warehouse_name)
 
     return jsonify(new_order.to_dict()), 201
 
@@ -147,7 +155,9 @@ def delete_order(order_id):
 @jwt_required()
 def update_order(order_id):
     """Update an order, create tracking record, and notify the user."""
-    from utils.orders import send_order_update_notification
+    from api.v1.endpoints.utils.orders import send_order_update_notification
+
+    mail = current_app.extensions['mail']
     # Obtain current user
     username = get_jwt_identity()
     # Get user from storage
@@ -192,8 +202,9 @@ def update_order(order_id):
     # Send notification email if there are changes
     if changes:
         send_order_update_notification(mail, order.user.email, order, changes)
-    
-    return jsonify(order.to_dict()), 200
+    order = order.to_dict()
+    order['user'] = order['user'].to_dict()
+    return jsonify(order), 200
 
 
 @orders_bp.route('/<order_id>/tracking', methods=['GET'])
