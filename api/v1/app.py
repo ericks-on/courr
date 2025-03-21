@@ -44,12 +44,12 @@ app.config["JWT_TOKEN_LOCATION"] = ["headers","cookies"]
 app.config["JWT_ACCESS_COOKIE_NAME"] = "accessToken"
 
 # email config
-app.config['MAIL_SERVER'] = 'server331.web-hosting.com'
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = 'mutisyaerickson@cbctrack.com'
-app.config['MAIL_PASSWORD'] = 'Chunkme@t254'
-app.config['MAIL_DEFAULT_SENDER'] = 'mutisyaerickson@cbctrack.com'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USER')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
 app.config['MAIL_DEBUG'] = True
 mail=Mail(app)
 
