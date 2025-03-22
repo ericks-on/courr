@@ -16,7 +16,7 @@ class Order(Basemodel, Base):
     weight = Column(String(128), nullable=False, default='pending')
     dimensions = Column(String(128), nullable=False, default='pending')
     user = relationship('User', backref='orders')
-    tracking = relationship('Tracking', back_populates='order')
+    tracking = relationship('Tracking', back_populates='order', cascade='all, delete-orphan')
     delivery_warehouse = relationship('Warehouse', backref='delivery_orders',
                                       foreign_keys=[delivery])
     pickup_warehouse = relationship('Warehouse', backref='pickup_orders',
