@@ -120,17 +120,19 @@ def pay():
     """Triggers an STK push for payment."""
     try:
         data = request.json
-        phone_number = data.get('phoneNumber')
+        phone_number = data.get('phone')
         amount = float(data.get('amount', 0))
         reference = data.get('reference', str(uuid.uuid4()))
         
-        if not phone_number:
+        print(phone_number, amount, reference)
+        if not phone_number or not amount:
             return jsonify({'success': False, 'error': 'Phone number is required'}), 400
             
         result = mpesa_client.initiate_stk_push(phone_number, amount, reference)
         return jsonify(result)
     
     except MpesaPaymentError as e:
+        print(e)
         return jsonify({'success': False, 'error': str(e)}), 400
     
     except Exception as e:
