@@ -17,11 +17,24 @@ from models.user import User
 from werkzeug.exceptions import BadRequest
 from models import storage
 from api.v1.endpoints import app_views
+from .mpesa import MpesaClient 
+from .mpesa import MpesaPaymentError, MpesaStatusError
+import logging
+import base64
+import json
+import logging
+import uuid
+from datetime import datetime, timedelta
+from flask import Flask, jsonify, request
+from werkzeug.exceptions import BadRequest
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('mpesa_flask_logger')
 
 
 load_dotenv()
 
+mpesa_client = MpesaClient()
 
 app = Flask(__name__)
 mail = Mail(app)
@@ -102,7 +115,73 @@ app.register_blueprint(app_views)
 
 app.url_map.strict_slashes = False
 
+@app.route('/pay', methods=['POST'])
+def pay():
+    """Triggers an STK push for payment."""
+    try:
+        data = request.json
+        phone_number = data.get('phoneNumber')
+        amount = float(data.get('amount', 0))
+        reference = data.get('reference', str(uuid.uuid4()))
+        
+        if not phone_number:
+            return jsonify({'success': False, 'error': 'Phone number is required'}), 400
+            
+        result = mpesa_client.initiate_stk_push(phone_number, amount, reference)
+        return jsonify(result)
+    
+    except MpesaPaymentError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in STK push: {e}")
+        return jsonify({'success': False, 'error': 'An unexpected error occurred'}), 500
 
+
+
+@app.route('/api/mpesa/status', methods=['POST'])
+def query_status():
+    try:
+        data = request.json
+        transaction_id = data.get('transaction_id')
+        identifier_type = data.get('identifier_type', '1')
+        
+        if not transaction_id:
+            return jsonify({'success': False, 'error': 'Transaction ID is required'}), 400
+            
+        result = mpesa_client.query_transaction_status(transaction_id, identifier_type)
+        return jsonify(result)
+    
+    except MpesaStatusError as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in status query: {e}")
+        return jsonify({'success': False, 'error': 'An unexpected error occurred'}), 500
+
+
+
+# route for M-Pesa responses
+@app.route('/api/mpesa/callback', methods=['POST'])
+def mpesa_callback():
+    try:
+        # Process callback data
+        callback_data = request.json
+        logger.info(f"M-Pesa callback received: {callback_data}")
+        
+        #  add some logic for how to handle the callback data.....eg saving it to the database
+        #  can also check the status of the transaction here
+        # and update the database accordingly
+        
+        return jsonify({'ResultCode': 0, 'ResultDesc': 'Accepted'})
+    
+    except Exception as e:
+        logger.error(f"Error processing callback: {e}")
+        return jsonify({'ResultCode': 1, 'ResultDesc': 'Rejected'}), 500
+
+
+    
+    
 @app.route('/email_test', methods=['GET'])
 def email_test():
     """sends a test email"""
